@@ -1,3 +1,5 @@
+Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
+
 function New-LabVM {
     param(
         [string]$Name,
