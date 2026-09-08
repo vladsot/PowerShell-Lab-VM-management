@@ -20,7 +20,7 @@ function New-LabVM {
     }
 
     # Find VHDX inside template folder
-    $templateVHD = Get-ChildItem -Path $templateFolder -Filter *.vhdx | Select-Object -First 1
+    $templateVHD = Get-ChildItem -Path $templateFolder -Recurse -Filter *.vhdx | Select-Object -First 1
     if (-not $templateVHD) {
         throw "No VHDX found in $templateFolder"
     }
@@ -39,11 +39,11 @@ function New-LabVM {
 
     # Create Gen1 VM
     New-VM -Name $Name -MemoryStartupBytes ($MemoryGB * 1GB) `
-        -Generation 1 -Path $vmPath -SwitchName $Switch
+        -Generation 2 -Path $vmPath -SwitchName $Switch
 
     # Attach disk to IDE (required for Gen1 boot)
     Add-VMHardDiskDrive -VMName $Name `
-        -ControllerType IDE -ControllerNumber 0 -ControllerLocation 0 `
+        -ControllerType SCSI -ControllerNumber 0 -ControllerLocation 0 `
         -Path $diffDisk
 
     # CPU
@@ -61,6 +61,10 @@ function New-LabVM {
     } catch {
         # Ignore for Gen1 VMs
     }
+
+    # Boot from HDD
+    $hdd = Get-VMHardDiskDrive -VMName $Name -ControllerType SCSI
+    Set-VMFirmware -VMName $Name -FirstBootDevice $hdd
 
     # Start VM
     #Start-VM $Name
